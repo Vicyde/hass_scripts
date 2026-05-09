@@ -12,6 +12,7 @@ function print_usage {
   echo -e "-t TOKEN     - Home assistant API token"
   echo -e "-u URL       - URL to home assistant client"
   echo -e "-h           - Show this information"
+  echo -e "-v           - Verbose mode"
   echo
   echo -e "A token and url can also be stored in ha_token.sh"
   exit 0
@@ -22,7 +23,7 @@ if [ -f "ha_token.sh" ]; then
   source ha_token.sh
 fi
 
-while getopts "a:e:S:t:u:h" opt; do
+while getopts "a:e:s:t:u:hv" opt; do
   case $opt in 
     a) ACTION="$OPTARG" ;;
     e) ENTITY_ID="$OPTARG" ;;
@@ -30,6 +31,7 @@ while getopts "a:e:S:t:u:h" opt; do
     t) TOKEN="$OPTARG" ;;
     u) URL="$OPTARG" ;;
     h) print_usage ;;
+    v) VERBOSE_MODE=1 ;;
   esac
 done
 
@@ -64,7 +66,10 @@ if [ -n "$ATTRIBUTES" ]; then
 fi
 JSON+="}"
 
-echo $JSON
+if [ -n "$VERBOSE_MODE" ]; then
+  echo "Performing $ACTION on $ENTITY_ID with the following JSON: "
+  echo $JSON | jq
+fi
 
 curl -s -X POST "$URL/api/services/$ACTION" \
      -H "Authorization: Bearer $TOKEN" \
