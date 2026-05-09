@@ -7,7 +7,7 @@ function print_usage {
   echo "usage: $0 -a ACTION -e ENTITY_ID [-t TOKEN] [-u URL]"
   echo
   echo -e "-a ACTION    - A home-assistant action to perform"
-  echo -e "-e ENTITY_ID - Entity to perform action on"
+  echo -e "-e ENTITY_ID - One or more entities to perform action on"
   echo -e "-s JSON      - Extra attributes to send, in JSON format"
   echo -e "-t TOKEN     - Home assistant API token"
   echo -e "-u URL       - URL to home assistant client"
@@ -60,19 +60,20 @@ if [ -z "$ENTITY_ID" ]; then
 fi
 
 # Build JSON
-JSON="{ \"entity_id\": \"$ENTITY_ID\"" 
-if [ -n "$ATTRIBUTES" ]; then
+for ENTITY in $ENTITY_ID; do
+  JSON="{ \"entity_id\": \"$ENTITY\"" 
+  if [ -n "$ATTRIBUTES" ]; then
   JSON+=",$ATTRIBUTES"
-fi
-JSON+="}"
+  fi
+  JSON+="}"
 
-if [ -n "$VERBOSE_MODE" ]; then
-  echo "Performing $ACTION on $ENTITY_ID with the following JSON: "
+  if [ -n "$VERBOSE_MODE" ]; then
+  echo "Performing $ACTION on $ENTITY with the following JSON: "
   echo $JSON | jq
-fi
+  fi
 
-curl -s -X POST "$URL/api/services/$ACTION" \
+  curl -s -X POST "$URL/api/services/$ACTION" \
      -H "Authorization: Bearer $TOKEN" \
      -H "Content-Type: application/json" \
-     -d "$JSON" \
-
+     -d "$JSON" 
+done
