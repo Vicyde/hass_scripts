@@ -3,11 +3,12 @@
 #
 # 09-05-2026
 #
-print_usage() {
+function print_usage {
   echo "usage: $0 -a ACTION -e ENTITY_ID [-t TOKEN] [-u URL]"
   echo
   echo -e "-a ACTION    - A home-assistant action to perform"
   echo -e "-e ENTITY_ID - Entity to perform action on"
+  echo -e "-s JSON      - Extra attributes to send, in JSON format"
   echo -e "-t TOKEN     - Home assistant API token"
   echo -e "-u URL       - URL to home assistant client"
   echo -e "-h           - Show this information"
@@ -21,10 +22,11 @@ if [ -f "ha_token.sh" ]; then
   source ha_token.sh
 fi
 
-while getopts "a:e:t:u:h" opt; do
+while getopts "a:e:S:t:u:h" opt; do
   case $opt in 
     a) ACTION="$OPTARG" ;;
     e) ENTITY_ID="$OPTARG" ;;
+    s) ATTRIBUTES="$OPTARG" ;;
     t) TOKEN="$OPTARG" ;;
     u) URL="$OPTARG" ;;
     h) print_usage ;;
@@ -55,10 +57,17 @@ if [ -z "$ENTITY_ID" ]; then
   exit 1
 fi
 
-echo "Performing $ACTION on $ENTITY_ID"
+# Build JSON
+JSON="{ \"entity_id\": \"$ENTITY_ID\"" 
+if [ -n "$ATTRIBUTES" ]; then
+  JSON+=",$ATTRIBUTES"
+fi
+JSON+="}"
+
+echo $JSON
 
 curl -s -X POST "$URL/api/services/$ACTION" \
      -H "Authorization: Bearer $TOKEN" \
      -H "Content-Type: application/json" \
-     -d "{ \"entity_id\": \"$ENTITY_ID\" }" \
+     -d "$JSON" \
 
